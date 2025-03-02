@@ -4,30 +4,41 @@ import os
 import sys
 
 class Re_Factory:
-    def run_in_script_dir():
+
+    TEXT_DIR = r"..\text_files"
+
+    PHONE_NUM_FILE = "numbers.txt"
+
+    TEXT_FILES = [PHONE_NUM_FILE]
+
+    def run_in_script_dir(self):
         '''
-            Change to script's location for correct relative location to text files.
-            Also creates text_files directory.
+            Change to script's location for correct relative location to TEXT_DIR.
+
+            Also creates TEXT_DIR directory.
         '''
         file_path = os.path.abspath(sys.argv[0])
         file_dir_path = os.path.dirname(file_path)
         os.chdir(file_dir_path)
 
-        text_dir = "../text_files"
-        if not os.path.exists(text_dir):
-            os.mkdir(text_dir)
+        if not os.path.exists(self.TEXT_DIR):
+            os.mkdir(self.TEXT_DIR)
+    
 
-    def gen_phone_nums(num_nums = 10000000):
+    def gen_phone_nums(self, num_nums = 10000000):
         '''
-            Will write to phone_num_file num_nums newline separated phone numbers (US).
+            Will write to PHONE_NUM_FILE num_nums newline separated phone numbers (US).
+
             num_nums        number of phone numbers to write to file, default 10000000.
         '''
 
-        # Relative location to the file we want to write to.
-        phone_num_file = "/numbers.txt"
-        phone_num_loc = os.path.relpath(TEXT_DIR + phone_num_file)
+        num_file = os.path.join(self.TEXT_DIR, self.PHONE_NUM_FILE)
 
-        # Length does include '-'s.
+        if not os.path.exists(num_file):
+            with open(num_file, 'w') as file:
+                pass
+
+        # Length includes '-'s.
         phone_num_len = 12
 
         random.seed()
@@ -42,20 +53,39 @@ class Re_Factory:
 
             list_nums[i] = "".join(num_list)
 
-        with open(phone_num_loc, 'w') as file:
+        with open(num_file, 'w') as file:
             for num in list_nums:
                 file.write(num)
                 file.write('\n')
 
-    def ret_list_match(pttrn, file_to_search):
+    def ret_list_match(self, pttrn, file_to_search):
         '''
-            Searches through file_to_search with given pattern. Returns list of matches with re.finditer.
+            Searches through file_to_search with given pattern. Returns list of matches with re.findall.
+            File must be inside of TEXT_DIR directory.
+
             pttrn               pattern to use with re.
             file_to_search      file to look through with pattern.
         '''
+        file_loc = self.TEXT_DIR + f"/{file_to_search}"
+
+        if not os.path.exists(file_loc):
+            sys.stdout.write(f"{file_to_search} was not found.")
+            return None
+
         compiled_pttrn = re.compile(pttrn)
 
+        with open(file_loc, 'r') as file:
+            text = file.read()
+        
+        match_list = compiled_pttrn.findall(text)
+
+        return match_list
+
 if __name__ == "__main__":
-    ref = Re_Factory
+    ref = Re_Factory()
 
     ref.run_in_script_dir()
+    matches = ref.ret_list_match(r'5\d\d-\d{3}-\d{3}5', ref.PHONE_NUM_FILE)
+
+    print(len(matches))
+    print(f"{len(matches)/10000000 * 100.0:.2}% ")
